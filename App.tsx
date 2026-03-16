@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  SafeAreaView, StatusBar, ScrollView, Dimensions
+  StatusBar, ScrollView, Platform
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAppStore, CURRENCIES } from './src/store/useAppStore'
 import { getElapsed, getSavedMoney, getLevel } from './src/utils/timeUtils'
 import SettingsScreen from './src/screens/SettingsScreen'
@@ -79,19 +80,19 @@ export default function App() {
   )
 
   if (tab === 'achievements') return (
-    <View style={{ flex: 1, backgroundColor: '#0a0a14' }}>
+    <View style={{ flex: 1, backgroundColor: '#07071a' }}>
       <AchievementsScreen onClose={() => setTab('home')} />
       <BottomNav tab={tab} setTab={setTab} />
     </View>
   )
   if (tab === 'tips') return (
-    <View style={{ flex: 1, backgroundColor: '#0a0a14' }}>
+    <View style={{ flex: 1, backgroundColor: '#07071a' }}>
       <TipsScreen onClose={() => setTab('home')} />
       <BottomNav tab={tab} setTab={setTab} />
     </View>
   )
   if (tab === 'analytics') return (
-    <View style={{ flex: 1, backgroundColor: '#0a0a14' }}>
+    <View style={{ flex: 1, backgroundColor: '#07071a' }}>
       <AnalyticsScreen onClose={() => setTab('home')} />
       <BottomNav tab={tab} setTab={setTab} />
     </View>
@@ -100,7 +101,7 @@ export default function App() {
   if (!startDate) {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="light-content" backgroundColor="#07071a" />
         <View style={styles.emptyState}>
           <Text style={styles.emptyEmoji}>🎯</Text>
           <Text style={styles.emptyTitle}>Свободен от ставок</Text>
@@ -130,10 +131,12 @@ export default function App() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#07071a' }}>
-      <SafeAreaView style={{ flex: 1 }}>
-        <StatusBar barStyle="light-content" />
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+        <StatusBar barStyle="light-content" backgroundColor="#07071a" />
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Шапка */}
           <View style={styles.header}>
             <View>
@@ -147,20 +150,16 @@ export default function App() {
 
           {/* Главная карточка */}
           <View style={styles.heroCard}>
-            {/* Декоративные круги */}
             <View style={styles.circle1} />
             <View style={styles.circle2} />
 
-            {/* Уровень */}
             <View style={styles.levelPill}>
               <Text style={styles.levelPillText}>{level.emoji}  {level.name}</Text>
             </View>
 
-            {/* Дни */}
             <Text style={styles.heroNumber}>{days}</Text>
             <Text style={styles.heroLabel}>ДНЕЙ БЕЗ СТАВОК</Text>
 
-            {/* Таймер */}
             <View style={styles.timerRow}>
               <View style={styles.timerBlock}>
                 <Text style={styles.timerNum}>{String(hours).padStart(2, '0')}</Text>
@@ -178,11 +177,10 @@ export default function App() {
               </View>
             </View>
 
-            {/* Прогресс */}
             {nextLevel && (
               <View style={styles.progressBox}>
                 <View style={styles.progressTrack}>
-                  <View style={[styles.progressFill, { width: `${progressPct}%` }]} />
+                  <View style={[styles.progressFill, { width: `${progressPct}%` as any }]} />
                 </View>
                 <Text style={styles.progressHint}>
                   До уровня «{nextLevel.name}»: {nextLevel.days - days} дн.
@@ -251,27 +249,29 @@ function BottomNav({ tab, setTab }: { tab: Tab, setTab: (t: Tab) => void }) {
   ] as const
 
   return (
-    <View style={nav.bar}>
-      {items.map(item => (
-        <TouchableOpacity key={item.id} style={nav.item} onPress={() => setTab(item.id)}>
-          <View style={[nav.pill, tab === item.id && nav.pillActive]}>
-            <Text style={nav.icon}>{item.icon}</Text>
-            {tab === item.id && <Text style={nav.label}>{item.label}</Text>}
-          </View>
-        </TouchableOpacity>
-      ))}
-    </View>
+    <SafeAreaView edges={['bottom']} style={nav.safeArea}>
+      <View style={nav.bar}>
+        {items.map(item => (
+          <TouchableOpacity key={item.id} style={nav.item} onPress={() => setTab(item.id)}>
+            <View style={[nav.pill, tab === item.id && nav.pillActive]}>
+              <Text style={nav.icon}>{item.icon}</Text>
+              {tab === item.id && <Text style={nav.label}>{item.label}</Text>}
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </SafeAreaView>
   )
 }
 
 const nav = StyleSheet.create({
+  safeArea: { backgroundColor: '#0d0d20' },
   bar: {
     flexDirection: 'row',
     backgroundColor: '#0d0d20',
     borderTopWidth: 1,
     borderTopColor: '#16163a',
-    paddingVertical: 10,
-    paddingBottom: 24,
+    paddingVertical: 8,
     paddingHorizontal: 12,
     alignItems: 'center',
     justifyContent: 'space-around',
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   emptyEmoji: { fontSize: 72, marginBottom: 24 },
   emptyTitle: { color: '#fff', fontSize: 28, fontWeight: 'bold', marginBottom: 12, textAlign: 'center' },
-  emptySubtitle: { color: '#666', fontSize: 16, textAlign: 'center', marginBottom: 40, lineHeight: 24 },
+  emptySubtitle: { color: '#888', fontSize: 16, textAlign: 'center', marginBottom: 40, lineHeight: 24 },
   startButton: { backgroundColor: '#6d28d9', borderRadius: 20, paddingVertical: 18, paddingHorizontal: 48 },
   startButtonText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
 
@@ -313,11 +313,10 @@ const styles = StyleSheet.create({
 
   heroCard: {
     backgroundColor: '#0e0e28',
-    borderRadius: 32, padding: 32,
+    borderRadius: 32, padding: 28,
     alignItems: 'center', marginBottom: 14,
     borderWidth: 1, borderColor: '#1a1a45',
     overflow: 'hidden',
-    position: 'relative',
   },
   circle1: {
     position: 'absolute', width: 250, height: 250,
@@ -337,12 +336,12 @@ const styles = StyleSheet.create({
   levelPillText: { color: '#c4b5fd', fontSize: 14, fontWeight: '700' },
 
   heroNumber: {
-    color: '#ffffff', fontSize: 104,
-    fontWeight: '900', lineHeight: 104,
-    letterSpacing: -8,
+    color: '#ffffff', fontSize: 96,
+    fontWeight: '900', lineHeight: 96,
+    letterSpacing: -6,
   },
   heroLabel: {
-    color: '#2e2e6a', fontSize: 11,
+    color: '#3a3a7a', fontSize: 11,
     fontWeight: '800', letterSpacing: 5,
     marginTop: 4, marginBottom: 24,
   },
@@ -356,8 +355,8 @@ const styles = StyleSheet.create({
   },
   timerBlock: { alignItems: 'center', minWidth: 50 },
   timerNum: { color: '#e0d7ff', fontSize: 26, fontWeight: '700', fontFamily: 'monospace' },
-  timerSub: { color: '#2e2e6a', fontSize: 8, letterSpacing: 2, marginTop: 2 },
-  timerColon: { color: '#2e2e6a', fontSize: 24, fontWeight: 'bold', marginBottom: 10 },
+  timerSub: { color: '#3a3a7a', fontSize: 8, letterSpacing: 2, marginTop: 2 },
+  timerColon: { color: '#3a3a7a', fontSize: 24, fontWeight: 'bold', marginBottom: 10 },
 
   progressBox: { width: '100%' },
   progressTrack: {
@@ -365,11 +364,9 @@ const styles = StyleSheet.create({
     borderRadius: 3, overflow: 'hidden', marginBottom: 8,
   },
   progressFill: {
-    height: 6,
-    backgroundColor: '#7c3aed',
-    borderRadius: 3,
+    height: 6, backgroundColor: '#7c3aed', borderRadius: 3,
   },
-  progressHint: { color: '#4a4a7a', fontSize: 12, textAlign: 'center' },
+  progressHint: { color: '#555', fontSize: 12, textAlign: 'center' },
 
   statsRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
   statCard: {
@@ -378,7 +375,7 @@ const styles = StyleSheet.create({
   },
   statIcon: { fontSize: 26, marginBottom: 8 },
   statNum: { color: '#fff', fontSize: 16, fontWeight: 'bold', marginBottom: 4 },
-  statSub: { color: '#4a4a7a', fontSize: 11, textAlign: 'center', lineHeight: 16 },
+  statSub: { color: '#666', fontSize: 11, textAlign: 'center', lineHeight: 16 },
 
   tipCard: {
     backgroundColor: '#0e0e28', borderRadius: 22,
@@ -388,7 +385,7 @@ const styles = StyleSheet.create({
   tipBadge: { color: '#6d28d9', fontSize: 11, fontWeight: '800', letterSpacing: 2, marginBottom: 12 },
   tipBody: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   tipEmoji: { fontSize: 32 },
-  tipText: { color: '#9090c0', fontSize: 14, lineHeight: 22, flex: 1 },
+  tipText: { color: '#bbb', fontSize: 14, lineHeight: 22, flex: 1 },
 
   sosButton: {
     backgroundColor: '#120828',
@@ -398,17 +395,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  sosLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  sosLeft: { flexDirection: 'row', alignItems: 'center', gap: 14, flex: 1 },
   sosDot: {
     width: 12, height: 12, borderRadius: 6,
     backgroundColor: '#dc2626',
-    shadowColor: '#dc2626',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 6,
-    elevation: 4,
   },
   sosTitle: { color: '#fff', fontSize: 16, fontWeight: 'bold', marginBottom: 3 },
-  sosSub: { color: '#6d28d9', fontSize: 12 },
-  sosArrow: { color: '#6d28d9', fontSize: 30, fontWeight: 'bold' },
+  sosSub: { color: '#7c3aed', fontSize: 12 },
+  sosArrow: { color: '#7c3aed', fontSize: 30, fontWeight: 'bold' },
 })
