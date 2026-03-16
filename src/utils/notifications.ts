@@ -1,4 +1,5 @@
 import * as Notifications from 'expo-notifications'
+import { Platform } from 'react-native'
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -10,16 +11,21 @@ Notifications.setNotificationHandler({
   }),
 })
 
+const isNative = Platform.OS !== 'web'
+
 export async function requestPermissions() {
+  if (!isNative) return true
   const { status } = await Notifications.requestPermissionsAsync()
   return status === 'granted'
 }
 
 export async function cancelAllNotifications() {
+  if (!isNative) return
   await Notifications.cancelAllScheduledNotificationsAsync()
 }
 
 export async function scheduleDailyMorning(hour = 9, minute = 0) {
+  if (!isNative) return
   await Notifications.scheduleNotificationAsync({
     content: {
       title: '💪 Доброе утро!',
@@ -34,6 +40,7 @@ export async function scheduleDailyMorning(hour = 9, minute = 0) {
 }
 
 export async function scheduleEveningReminder(hour = 21, minute = 0) {
+  if (!isNative) return
   await Notifications.scheduleNotificationAsync({
     content: {
       title: '🌙 Как прошёл день?',
@@ -59,6 +66,7 @@ const MILESTONE_MESSAGES: Record<number, string> = {
 }
 
 export async function checkAndScheduleMilestone(days: number) {
+  if (!isNative) return
   const message = MILESTONE_MESSAGES[days]
   if (!message) return
   await Notifications.scheduleNotificationAsync({
@@ -70,15 +78,8 @@ export async function checkAndScheduleMilestone(days: number) {
   })
 }
 
-export async function setupAllNotifications() {
-  const granted = await requestPermissions()
-  if (!granted) return
-  await cancelAllNotifications()
-  await scheduleDailyMorning()
-  await scheduleEveningReminder()
-}
-
 export async function scheduleDangerHours(hourStart: number, hourEnd: number) {
+  if (!isNative) return
   const messages = [
     '💪 Сейчас опасное время. Ты справишься!',
     '🛡️ Помни зачем ты начал. Держись!',
@@ -86,7 +87,6 @@ export async function scheduleDangerHours(hourStart: number, hourEnd: number) {
     '🎯 Не сдавайся. Ты уже так далеко зашёл!',
     '🌊 Прокатись на волне желания — оно пройдёт.',
   ]
-
   for (let hour = hourStart; hour <= hourEnd; hour++) {
     const message = messages[hour % messages.length]
     await Notifications.scheduleNotificationAsync({
@@ -101,4 +101,13 @@ export async function scheduleDangerHours(hourStart: number, hourEnd: number) {
       },
     })
   }
+}
+
+export async function setupAllNotifications() {
+  if (!isNative) return
+  const granted = await requestPermissions()
+  if (!granted) return
+  await cancelAllNotifications()
+  await scheduleDailyMorning()
+  await scheduleEveningReminder()
 }

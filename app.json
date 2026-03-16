@@ -1,40 +1,34 @@
 {
   "expo": {
-    "name": "svoboden",
-    "slug": "svoboden",
+    "name": "GamFree",
+    "slug": "gamfree",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#07071a"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.gamfree.app"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#07071a"
       },
-      "predictiveBackGestureEnabled": false,
-      "package": "com.fylkrym.svoboden"
+      "package": "com.gamfree.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-sqlite"
-    ],
     "extra": {
       "eas": {
         "projectId": "996890d8-2a12-4fc9-920d-2effb7b7f6c6"
       }
-    },
-    "owner": "fylkrym"
+    }
   }
 }

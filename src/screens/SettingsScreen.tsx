@@ -5,11 +5,12 @@ import {
 } from 'react-native'
 import { useAppStore, CURRENCIES } from '../store/useAppStore'
 import { scheduleDangerHours, cancelAllNotifications, setupAllNotifications } from '../utils/notifications'
+import i18n, { LANGUAGES } from '../utils/i18n'
 
 export default function SettingsScreen({ onClose }: { onClose: () => void }) {
   const {
-    startDate, dailyAmount, dangerHourStart, dangerHourEnd, currency,
-    setStartDate, setDailyAmount, resetCounter, setDangerHours, setCurrency
+    startDate, dailyAmount, dangerHourStart, dangerHourEnd, currency, language,
+    setStartDate, setDailyAmount, resetCounter, setDangerHours, setCurrency, setLanguage
   } = useAppStore()
 
   const [dateInput, setDateInput] = useState(
@@ -19,6 +20,7 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
   const [dangerStart, setDangerStart] = useState(String(dangerHourStart))
   const [dangerEnd, setDangerEnd] = useState(String(dangerHourEnd))
   const [selectedCurrency, setSelectedCurrency] = useState(currency)
+  const [selectedLanguage, setSelectedLanguage] = useState(language)
 
   const handleSave = async () => {
     const parts = dateInput.split('.')
@@ -38,6 +40,7 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
       await scheduleDangerHours(start, end)
     }
     await setCurrency(selectedCurrency)
+    await setLanguage(selectedLanguage)
     onClose()
   }
 
@@ -48,13 +51,15 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
     onClose()
   }
 
+  const t = (key: string) => i18n.t(key)
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.title}>⚙️ Настройки</Text>
+        <Text style={styles.title}>⚙️ {t('settings')}</Text>
 
-        <Text style={styles.label}>Дата начала воздержания</Text>
-        <Text style={styles.hint}>Формат: ДД.ММ.ГГГГ</Text>
+        <Text style={styles.label}>{t('startDate')}</Text>
+        <Text style={styles.hint}>{t('dateFormat')}</Text>
         <TextInput
           style={styles.input}
           value={dateInput}
@@ -64,7 +69,7 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
           keyboardType="numeric"
         />
 
-        <Text style={styles.label}>Средняя сумма ставок в день</Text>
+        <Text style={styles.label}>{t('dailyAmount')}</Text>
         <TextInput
           style={styles.input}
           value={amountInput}
@@ -74,7 +79,23 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
           keyboardType="numeric"
         />
 
-        <Text style={styles.label}>💱 Валюта</Text>
+        <Text style={styles.label}>{t('language')}</Text>
+        <View style={styles.langGrid}>
+          {LANGUAGES.map(l => (
+            <TouchableOpacity
+              key={l.code}
+              style={[styles.langBtn, selectedLanguage === l.code && styles.langBtnActive]}
+              onPress={() => setSelectedLanguage(l.code)}
+            >
+              <Text style={styles.langFlag}>{l.flag}</Text>
+              <Text style={[styles.langName, selectedLanguage === l.code && styles.langNameActive]}>
+                {l.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <Text style={styles.label}>{t('currency')}</Text>
         <View style={styles.currencyGrid}>
           {CURRENCIES.map(c => (
             <TouchableOpacity
@@ -90,8 +111,8 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
           ))}
         </View>
 
-        <Text style={styles.label}>⚠️ Опасные часы</Text>
-        <Text style={styles.hint}>В это время придёт поддерживающее уведомление</Text>
+        <Text style={styles.label}>{t('dangerHours')}</Text>
+        <Text style={styles.hint}>{t('dangerHoursSub')}</Text>
         <View style={styles.hoursRow}>
           <View style={styles.hourBox}>
             <Text style={styles.hourLabel}>С</Text>
@@ -123,15 +144,15 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
         </View>
 
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>💾 Сохранить</Text>
+          <Text style={styles.saveButtonText}>{t('save')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-          <Text style={styles.resetButtonText}>🔄 Сбросить счётчик</Text>
+          <Text style={styles.resetButtonText}>{t('resetCounter')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <Text style={styles.closeButtonText}>← Назад</Text>
+          <Text style={styles.closeButtonText}>{t('back')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -139,21 +160,30 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0a14' },
+  container: { flex: 1, backgroundColor: '#07071a' },
   scroll: { padding: 24 },
   title: { color: '#fff', fontSize: 28, fontWeight: 'bold', marginBottom: 32, marginTop: 16 },
   label: { color: '#a78bfa', fontSize: 16, fontWeight: '600', marginBottom: 6, marginTop: 20 },
-  hint: { color: '#555', fontSize: 13, marginBottom: 8 },
+  hint: { color: '#666', fontSize: 13, marginBottom: 8 },
   input: {
-    backgroundColor: '#1a1a2e', color: '#fff',
+    backgroundColor: '#12122a', color: '#fff',
     borderRadius: 12, padding: 16, fontSize: 18,
     borderWidth: 1, borderColor: '#2a2a4a',
   },
-  currencyGrid: {
-    flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4,
+  langGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 4 },
+  langBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#12122a', borderRadius: 12,
+    paddingVertical: 12, paddingHorizontal: 16,
+    borderWidth: 1, borderColor: '#2a2a4a',
   },
+  langBtnActive: { backgroundColor: '#2d1a50', borderColor: '#7c3aed' },
+  langFlag: { fontSize: 20 },
+  langName: { color: '#888', fontSize: 14 },
+  langNameActive: { color: '#fff', fontWeight: '600' },
+  currencyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   currencyBtn: {
-    backgroundColor: '#1a1a2e', borderRadius: 12,
+    backgroundColor: '#12122a', borderRadius: 12,
     paddingVertical: 10, paddingHorizontal: 14,
     flexDirection: 'row', alignItems: 'center', gap: 6,
     borderWidth: 1, borderColor: '#2a2a4a',
@@ -165,24 +195,24 @@ const styles = StyleSheet.create({
   hoursRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 4 },
   hourBox: {
     flex: 1, flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#1a1a2e', borderRadius: 12,
+    backgroundColor: '#12122a', borderRadius: 12,
     padding: 12, borderWidth: 1, borderColor: '#2a2a4a', gap: 8,
   },
-  hourLabel: { color: '#666', fontSize: 14 },
+  hourLabel: { color: '#888', fontSize: 14 },
   hourInput: { color: '#fff', fontSize: 22, fontWeight: 'bold', width: 40, textAlign: 'center' },
-  hourSuffix: { color: '#555', fontSize: 16 },
-  hourDash: { color: '#555', fontSize: 20 },
+  hourSuffix: { color: '#666', fontSize: 16 },
+  hourDash: { color: '#666', fontSize: 20 },
   saveButton: {
     backgroundColor: '#7c3aed', borderRadius: 16,
     padding: 18, alignItems: 'center', marginTop: 32,
   },
   saveButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   resetButton: {
-    backgroundColor: '#1a1a2e', borderRadius: 16,
+    backgroundColor: '#12122a', borderRadius: 16,
     padding: 18, alignItems: 'center', marginTop: 12,
     borderWidth: 1, borderColor: '#7c3aed',
   },
   resetButtonText: { color: '#a78bfa', fontSize: 16 },
   closeButton: { padding: 18, alignItems: 'center', marginTop: 8 },
-  closeButtonText: { color: '#555', fontSize: 16 },
+  closeButtonText: { color: '#666', fontSize: 16 },
 })

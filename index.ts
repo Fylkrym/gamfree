@@ -4,10 +4,10 @@ import React from 'react'
 import App from './App'
 
 function Root() {
-  return (
-    <SafeAreaProvider>
-      <App />
-    </SafeAreaProvider>
+  return React.createElement(
+    SafeAreaProvider,
+    null,
+    React.createElement(App, null)
   )
 }
 

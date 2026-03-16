@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { setLocale } from '../utils/i18n'
 
 export const CURRENCIES = [
   { code: 'RUB', symbol: '₽', name: 'Рубль' },
@@ -21,12 +22,14 @@ interface AppState {
   dangerHourStart: number
   dangerHourEnd: number
   currency: string
+  language: string
   setStartDate: (date: string) => void
   setDailyAmount: (amount: number) => void
   incrementUrge: () => void
   resetCounter: (newDate: string) => void
   setDangerHours: (start: number, end: number) => void
   setCurrency: (currency: string) => void
+  setLanguage: (language: string) => void
   loadFromStorage: () => Promise<void>
 }
 
@@ -37,6 +40,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   dangerHourStart: 20,
   dangerHourEnd: 23,
   currency: 'RUB',
+  language: 'ru',
 
   setStartDate: async (date) => {
     set({ startDate: date })
@@ -71,6 +75,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     await AsyncStorage.setItem('currency', currency)
   },
 
+  setLanguage: async (language) => {
+    set({ language })
+    setLocale(language)
+    await AsyncStorage.setItem('language', language)
+  },
+
   loadFromStorage: async () => {
     const startDate = await AsyncStorage.getItem('startDate')
     const dailyAmount = await AsyncStorage.getItem('dailyAmount')
@@ -78,6 +88,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     const dangerHourStart = await AsyncStorage.getItem('dangerHourStart')
     const dangerHourEnd = await AsyncStorage.getItem('dangerHourEnd')
     const currency = await AsyncStorage.getItem('currency')
+    const language = await AsyncStorage.getItem('language')
+    if (language) setLocale(language)
     set({
       startDate: startDate ?? null,
       dailyAmount: dailyAmount ? Number(dailyAmount) : 500,
@@ -85,6 +97,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       dangerHourStart: dangerHourStart ? Number(dangerHourStart) : 20,
       dangerHourEnd: dangerHourEnd ? Number(dangerHourEnd) : 23,
       currency: currency ?? 'RUB',
+      language: language ?? 'ru',
     })
   },
 }))
