@@ -16,6 +16,7 @@ import OnboardingScreen from './src/screens/OnboardingScreen'
 import MoodScreen from './src/screens/MoodScreen'
 import { setupAllNotifications, checkAndScheduleMilestone } from './src/utils/notifications'
 import i18n from './src/utils/i18n'
+import WeeklyCard from './src/components/WeeklyCard'
 
 type Tab = 'home' | 'achievements' | 'tips' | 'analytics'
 
