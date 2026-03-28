@@ -4,7 +4,7 @@
     "slug": "svoboden",
     "version": "1.0.0",
     "orientation": "portrait",
-    "foregroundImage": "./assets/android-icon-foreground.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/splash.png",

@@ -190,7 +190,7 @@ export default function App() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#07071a' }}>
-      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
         <StatusBar barStyle="light-content" backgroundColor="#07071a" />
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
@@ -312,7 +312,7 @@ const nav = StyleSheet.create({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#07071a' },
-  scroll: { padding: 20, paddingBottom: 40 },
+  scroll: { padding: 20, paddingTop: 10, paddingBottom: 40 },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   emptyEmoji: { fontSize: 80, marginBottom: 24 },
   emptyTitle: { color: '#fff', fontSize: 30, fontWeight: 'bold', marginBottom: 12, textAlign: 'center' },

@@ -26,3 +26,13 @@ export function getLevel(days: number) {
   if (days >= 1) return { name: 'Новичок', emoji: '🌱' }
   return { name: 'Старт', emoji: '🚀' }
 }
+
+// Глобальные размеры шрифтов
+export const FONTS = {
+  xs: 13,
+  sm: 15,
+  md: 17,
+  lg: 20,
+  xl: 24,
+  xxl: 28,
+}
