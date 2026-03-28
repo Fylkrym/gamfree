@@ -1,8 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import {
-  View, Text, StyleSheet, TouchableOpacity,
-  StatusBar, ScrollView
-} from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAppStore, CURRENCIES } from './src/store/useAppStore'
 import { getElapsed, getSavedMoney, getLevel } from './src/utils/timeUtils'
@@ -102,23 +99,17 @@ export default function App() {
   const [onboardingDone, setOnboardingDone] = useState(false)
   const [, forceUpdate] = useState(0)
 
-  useEffect(() => {
-    loadFromStorage()
-    setupAllNotifications()
-  }, [])
-
+  useEffect(() => { loadFromStorage(); setupAllNotifications() }, [])
   useEffect(() => {
     if (startDate) {
       const { days } = getElapsed(startDate)
       checkAndScheduleMilestone(days)
     }
   }, [startDate])
-
   useEffect(() => {
     const interval = setInterval(() => setTick(t => t + 1), 1000)
     return () => clearInterval(interval)
   }, [])
-
   useEffect(() => {
     i18n.locale = language || 'ru'
     forceUpdate(n => n + 1)
@@ -127,25 +118,16 @@ export default function App() {
   i18n.locale = language || 'ru'
   const t = (key: string) => i18n.t(key)
 
-  if (!onboardingDone && !startDate) {
-    return <OnboardingScreen onDone={() => setOnboardingDone(true)} />
-  }
-
+  if (!onboardingDone && !startDate) return <OnboardingScreen onDone={() => setOnboardingDone(true)} />
   if (showSettings) return <SettingsScreen onClose={() => { setShowSettings(false); forceUpdate(n => n + 1) }} />
   if (showMood) return <MoodScreen onClose={() => setShowMood(false)} />
   if (showUrge) return (
-    <UrgeScreen onClose={(resisted) => {
-      setShowUrge(false)
-      if (!resisted) setShowRelapse(true)
-    }} />
+    <UrgeScreen onClose={(resisted) => { setShowUrge(false); if (!resisted) setShowRelapse(true) }} />
   )
   if (showRelapse) return (
     <RelapseScreen
       onClose={() => setShowRelapse(false)}
-      onRestart={() => {
-        resetCounter(new Date().toISOString())
-        setShowRelapse(false)
-      }}
+      onRestart={() => { resetCounter(new Date().toISOString()); setShowRelapse(false) }}
     />
   )
 
@@ -195,22 +177,16 @@ export default function App() {
     days < 30 ? { name: t('levelStrong'), days: 30 } :
     days < 100 ? { name: t('levelMaster'), days: 100 } : null
 
-  const progressPct = nextLevel
-    ? Math.min((days / nextLevel.days) * 100, 100)
-    : 100
+  const progressPct = nextLevel ? Math.min((days / nextLevel.days) * 100, 100) : 100
 
   const levelName = days >= 100 ? t('levelMaster') :
     days >= 30 ? t('levelStrong') :
     days >= 7 ? t('levelFighter') :
     days >= 1 ? t('levelNewbie') : t('levelStart')
 
-  const timerLabels = language === 'en'
-    ? ['HRS', 'MIN', 'SEC']
-    : language === 'kk'
-    ? ['САҒ', 'МИН', 'СЕК']
-    : language === 'uk'
-    ? ['ГОД', 'ХВ', 'СЕК']
-    : ['ЧАС', 'МИН', 'СЕК']
+  const timerLabels = language === 'en' ? ['HRS', 'MIN', 'SEC'] :
+    language === 'kk' ? ['САҒ', 'МИН', 'СЕК'] :
+    language === 'uk' ? ['ГОД', 'ХВ', 'СЕК'] : ['ЧАС', 'МИН', 'СЕК']
 
   return (
     <View style={{ flex: 1, backgroundColor: '#07071a' }}>
@@ -282,6 +258,9 @@ export default function App() {
             </View>
           </View>
 
+          <WeeklyCard />
+          <HealthCard />
+
           <View style={styles.tipCard}>
             <Text style={styles.tipBadge}>{t('tipOfDay')}</Text>
             <View style={styles.tipBody}>
@@ -293,8 +272,8 @@ export default function App() {
           <TouchableOpacity style={styles.moodCard} onPress={() => setShowMood(true)}>
             <Text style={styles.moodCardEmoji}>😌</Text>
             <View style={{ flex: 1 }}>
-              <Text style={styles.moodCardTitle}>Как ты сегодня?</Text>
-              <Text style={styles.moodCardSub}>Отметь своё настроение</Text>
+              <Text style={styles.moodCardTitle}>{t('moodTitle')}</Text>
+              <Text style={styles.moodCardSub}>{t('moodSubtitle')}</Text>
             </View>
             <Text style={styles.sosArrow}>›</Text>
           </TouchableOpacity>
@@ -325,11 +304,7 @@ const nav = StyleSheet.create({
     paddingVertical: 10, paddingHorizontal: 12,
   },
   item: { flex: 1, alignItems: 'center' },
-  pill: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingVertical: 10, paddingHorizontal: 14,
-    borderRadius: 20, gap: 6,
-  },
+  pill: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 14, borderRadius: 20, gap: 6 },
   pillActive: { backgroundColor: '#1e1040' },
   icon: { fontSize: 24 },
   label: { color: '#a78bfa', fontSize: 14, fontWeight: '700' },
@@ -375,12 +350,7 @@ const styles = StyleSheet.create({
   tipBody: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   tipEmoji: { fontSize: 34 },
   tipText: { color: '#ccc', fontSize: 16, lineHeight: 24, flex: 1 },
-  moodCard: {
-    backgroundColor: '#0e1428', borderRadius: 22, padding: 20,
-    borderWidth: 1, borderColor: '#1a2a4a',
-    flexDirection: 'row', alignItems: 'center',
-    gap: 14, marginBottom: 14,
-  },
+  moodCard: { backgroundColor: '#0e1428', borderRadius: 22, padding: 20, borderWidth: 1, borderColor: '#1a2a4a', flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 },
   moodCardEmoji: { fontSize: 34 },
   moodCardTitle: { color: '#fff', fontSize: 17, fontWeight: 'bold', marginBottom: 3 },
   moodCardSub: { color: '#4a6a9a', fontSize: 13 },
