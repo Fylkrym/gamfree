@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  TextInput, SafeAreaView, ScrollView
+  TextInput, ScrollView
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAppStore, CURRENCIES } from '../store/useAppStore'
 import { scheduleDangerHours, cancelAllNotifications, setupAllNotifications } from '../utils/notifications'
 import i18n, { LANGUAGES } from '../utils/i18n'
@@ -21,6 +22,20 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
   const [dangerEnd, setDangerEnd] = useState(String(dangerHourEnd))
   const [selectedCurrency, setSelectedCurrency] = useState(currency)
   const [selectedLanguage, setSelectedLanguage] = useState(language)
+
+  i18n.locale = language || 'ru'
+  const t = (key: string) => i18n.t(key)
+
+  const handleDateChange = (text: string) => {
+    const digits = text.replace(/\D/g, '')
+    let formatted = digits
+    if (digits.length >= 3 && digits.length <= 4) {
+      formatted = digits.slice(0, 2) + '.' + digits.slice(2)
+    } else if (digits.length >= 5) {
+      formatted = digits.slice(0, 2) + '.' + digits.slice(2, 4) + '.' + digits.slice(4, 8)
+    }
+    setDateInput(formatted)
+  }
 
   const handleSave = async () => {
     const parts = dateInput.split('.')
@@ -51,22 +66,29 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
     onClose()
   }
 
-  const t = (key: string) => i18n.t(key)
-
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.title}>⚙️ {t('settings')}</Text>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      {/* Шапка с кнопкой назад */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={onClose}>
+          <Text style={styles.backBtnText}>← {t('back')}</Text>
+        </TouchableOpacity>
+        <Text style={styles.title}>{t('settings')}</Text>
+        <View style={{ width: 80 }} />
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
         <Text style={styles.label}>{t('startDate')}</Text>
         <Text style={styles.hint}>{t('dateFormat')}</Text>
         <TextInput
           style={styles.input}
           value={dateInput}
-          onChangeText={setDateInput}
+          onChangeText={handleDateChange}
           placeholder="01.03.2025"
           placeholderTextColor="#555"
           keyboardType="numeric"
+          maxLength={10}
         />
 
         <Text style={styles.label}>{t('dailyAmount')}</Text>
@@ -151,9 +173,6 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
           <Text style={styles.resetButtonText}>{t('resetCounter')}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <Text style={styles.closeButtonText}>{t('back')}</Text>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   )
@@ -161,8 +180,20 @@ export default function SettingsScreen({ onClose }: { onClose: () => void }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#07071a' },
-  scroll: { padding: 24 },
-  title: { color: '#fff', fontSize: 28, fontWeight: 'bold', marginBottom: 32, marginTop: 16 },
+  header: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingVertical: 16,
+    borderBottomWidth: 1, borderBottomColor: '#1a1a38',
+  },
+  backBtn: {
+    backgroundColor: '#1e1040', borderRadius: 12,
+    paddingVertical: 8, paddingHorizontal: 16,
+    borderWidth: 1, borderColor: '#4c1d95',
+  },
+  backBtnText: { color: '#a78bfa', fontSize: 15, fontWeight: '600' },
+  title: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
+  scroll: { padding: 20, paddingBottom: 40 },
   label: { color: '#a78bfa', fontSize: 16, fontWeight: '600', marginBottom: 6, marginTop: 20 },
   hint: { color: '#666', fontSize: 13, marginBottom: 8 },
   input: {
@@ -213,6 +244,4 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#7c3aed',
   },
   resetButtonText: { color: '#a78bfa', fontSize: 16 },
-  closeButton: { padding: 18, alignItems: 'center', marginTop: 8 },
-  closeButtonText: { color: '#666', fontSize: 16 },
 })

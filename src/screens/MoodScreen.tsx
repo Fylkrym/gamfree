@@ -1,17 +1,12 @@
 import React, { useState } from 'react'
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  SafeAreaView, ScrollView
+  ScrollView
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-
-const MOODS = [
-  { emoji: '😊', label: 'Отлично', value: 5, color: '#22c55e' },
-  { emoji: '🙂', label: 'Хорошо', value: 4, color: '#84cc16' },
-  { emoji: '😐', label: 'Нормально', value: 3, color: '#eab308' },
-  { emoji: '😔', label: 'Плохо', value: 2, color: '#f97316' },
-  { emoji: '😰', label: 'Очень плохо', value: 1, color: '#ef4444' },
-]
+import { useAppStore } from '../store/useAppStore'
+import i18n from '../utils/i18n'
 
 interface MoodEntry {
   date: string
@@ -22,6 +17,18 @@ interface MoodEntry {
 }
 
 export default function MoodScreen({ onClose }: { onClose: () => void }) {
+  const { language } = useAppStore()
+  i18n.locale = language || 'ru'
+  const t = (key: string) => i18n.t(key)
+
+  const MOODS = [
+    { emoji: '😊', label: t('moodExcellent'), value: 5, color: '#22c55e' },
+    { emoji: '🙂', label: t('moodGood'), value: 4, color: '#84cc16' },
+    { emoji: '😐', label: t('moodOk'), value: 3, color: '#eab308' },
+    { emoji: '😔', label: t('moodBad'), value: 2, color: '#f97316' },
+    { emoji: '😰', label: t('moodTerrible'), value: 1, color: '#ef4444' },
+  ]
+
   const [selectedMood, setSelectedMood] = useState<number | null>(null)
   const [hadUrge, setHadUrge] = useState<boolean | null>(null)
   const [saved, setSaved] = useState(false)
@@ -53,13 +60,13 @@ export default function MoodScreen({ onClose }: { onClose: () => void }) {
 
   if (saved) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.savedBox}>
           <Text style={styles.savedEmoji}>✅</Text>
-          <Text style={styles.savedTitle}>Записано!</Text>
-          <Text style={styles.savedSub}>Продолжай отслеживать своё состояние каждый день.</Text>
+          <Text style={styles.savedTitle}>{t('moodSaved')}</Text>
+          <Text style={styles.savedSub}>{t('moodSavedSub')}</Text>
           <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-            <Text style={styles.closeBtnText}>← На главную</Text>
+            <Text style={styles.closeBtnText}>{t('moodBack')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -67,18 +74,18 @@ export default function MoodScreen({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={onClose}>
+          <Text style={styles.backBtnText}>{t('back')}</Text>
+        </TouchableOpacity>
+        <Text style={styles.title}>{t('moodTitle')}</Text>
+        <View style={{ width: 80 }} />
+      </View>
+
       <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.header}>
-          <Text style={styles.title}>😌 Как ты сейчас?</Text>
-          <TouchableOpacity onPress={onClose}>
-            <Text style={styles.closeX}>✕</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.subtitle}>{t('moodSubtitle')}</Text>
 
-        <Text style={styles.subtitle}>Отметь своё состояние сегодня</Text>
-
-        {/* Выбор настроения */}
         <View style={styles.moodRow}>
           {MOODS.map(m => (
             <TouchableOpacity
@@ -92,35 +99,32 @@ export default function MoodScreen({ onClose }: { onClose: () => void }) {
           ))}
         </View>
 
-        {/* Был ли соблазн */}
-        <Text style={styles.question}>Был ли сегодня соблазн сделать ставку?</Text>
+        <Text style={styles.question}>{t('moodQuestion')}</Text>
         <View style={styles.urgeRow}>
           <TouchableOpacity
             style={[styles.urgeBtn, hadUrge === true && styles.urgeBtnActive]}
             onPress={() => setHadUrge(true)}
           >
-            <Text style={styles.urgeBtnText}>😤 Да, был</Text>
+            <Text style={styles.urgeBtnText}>{t('moodYes')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.urgeBtn, hadUrge === false && styles.urgeBtnGood]}
             onPress={() => setHadUrge(false)}
           >
-            <Text style={styles.urgeBtnText}>😌 Нет, всё ок</Text>
+            <Text style={styles.urgeBtnText}>{t('moodNo')}</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Кнопка сохранить */}
         <TouchableOpacity
           style={[styles.saveBtn, (selectedMood === null || hadUrge === null) && styles.saveBtnDisabled]}
           onPress={handleSave}
           disabled={selectedMood === null || hadUrge === null}
         >
-          <Text style={styles.saveBtnText}>💾 Сохранить</Text>
+          <Text style={styles.saveBtnText}>{t('moodSave')}</Text>
         </TouchableOpacity>
 
-        {/* История */}
         <TouchableOpacity style={styles.historyBtn} onPress={loadHistory}>
-          <Text style={styles.historyBtnText}>📊 История настроения</Text>
+          <Text style={styles.historyBtnText}>{t('moodHistory')}</Text>
         </TouchableOpacity>
 
         {showHistory && history.length > 0 && (
@@ -130,7 +134,7 @@ export default function MoodScreen({ onClose }: { onClose: () => void }) {
                 <Text style={styles.historyEmoji}>{h.emoji}</Text>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.historyLabel}>{h.label} — {h.date}</Text>
-                  <Text style={styles.historySub}>{h.hadUrge ? '⚠️ Был соблазн' : '✅ Соблазна не было'}</Text>
+                  <Text style={styles.historySub}>{h.hadUrge ? '⚠️ ' + t('moodYes') : '✅ ' + t('moodNo')}</Text>
                 </View>
               </View>
             ))}
@@ -138,9 +142,8 @@ export default function MoodScreen({ onClose }: { onClose: () => void }) {
         )}
 
         {showHistory && history.length === 0 && (
-          <Text style={styles.emptyHistory}>Пока нет записей</Text>
+          <Text style={styles.emptyHistory}>{t('moodEmpty')}</Text>
         )}
-
       </ScrollView>
     </SafeAreaView>
   )
@@ -148,19 +151,28 @@ export default function MoodScreen({ onClose }: { onClose: () => void }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#07071a' },
-  scroll: { padding: 24 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  title: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
-  closeX: { color: '#666', fontSize: 22, padding: 4 },
+  header: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', padding: 20, paddingBottom: 16,
+    borderBottomWidth: 1, borderBottomColor: '#1a1a38',
+  },
+  backBtn: {
+    backgroundColor: '#1e1040', borderRadius: 12,
+    paddingVertical: 8, paddingHorizontal: 16,
+    borderWidth: 1, borderColor: '#4c1d95',
+  },
+  backBtnText: { color: '#a78bfa', fontSize: 15, fontWeight: '600' },
+  title: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
+  scroll: { padding: 20, paddingBottom: 40 },
   subtitle: { color: '#888', fontSize: 16, marginBottom: 24 },
   moodRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32 },
   moodBtn: {
-    alignItems: 'center', padding: 12,
+    alignItems: 'center', padding: 10,
     borderRadius: 16, borderWidth: 2,
     borderColor: '#1a1a38', flex: 1, marginHorizontal: 3,
   },
-  moodEmoji: { fontSize: 32, marginBottom: 6 },
-  moodLabel: { color: '#666', fontSize: 11, textAlign: 'center' },
+  moodEmoji: { fontSize: 30, marginBottom: 6 },
+  moodLabel: { color: '#666', fontSize: 10, textAlign: 'center' },
   question: { color: '#fff', fontSize: 17, fontWeight: '600', marginBottom: 16 },
   urgeRow: { flexDirection: 'row', gap: 12, marginBottom: 32 },
   urgeBtn: {
@@ -193,6 +205,9 @@ const styles = StyleSheet.create({
   savedEmoji: { fontSize: 64, marginBottom: 16 },
   savedTitle: { color: '#fff', fontSize: 28, fontWeight: 'bold', marginBottom: 12 },
   savedSub: { color: '#888', fontSize: 16, textAlign: 'center', lineHeight: 24, marginBottom: 32 },
-  closeBtn: { padding: 16 },
-  closeBtnText: { color: '#a78bfa', fontSize: 16 },
+  closeBtn: {
+    backgroundColor: '#7c3aed', borderRadius: 16,
+    paddingVertical: 16, paddingHorizontal: 40,
+  },
+  closeBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 })
