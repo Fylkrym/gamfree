@@ -1,39 +1,37 @@
 import React, { useState } from 'react'
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  SafeAreaView, TextInput, ScrollView
+  TextInput, ScrollView
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAppStore, CURRENCIES } from '../store/useAppStore'
 import { setupAllNotifications } from '../utils/notifications'
-
-const STEPS = [
-  {
-    emoji: '🎯',
-    title: 'Свободен от ставок',
-    subtitle: 'Приложение поможет отслеживать прогресс, бороться с соблазнами и видеть результат каждый день.',
-    type: 'intro',
-  },
-  {
-    emoji: '📅',
-    title: 'Когда ты остановился?',
-    subtitle: 'Укажи дату последней ставки',
-    type: 'date',
-  },
-  {
-    emoji: '💰',
-    title: 'Сколько тратил на ставки?',
-    subtitle: 'Мы покажем сколько ты уже сэкономил',
-    type: 'amount',
-  },
-]
+import i18n, { LANGUAGES } from '../utils/i18n'
+import { getLocales } from 'expo-localization'
 
 export default function OnboardingScreen({ onDone }: { onDone: () => void }) {
-  const { setStartDate, setDailyAmount, setCurrency } = useAppStore()
+  const { setStartDate, setDailyAmount, setCurrency, setLanguage } = useAppStore()
+
+  const deviceLocale = getLocales()[0]?.languageCode ?? 'ru'
+  const supportedLocales = ['ru', 'uk', 'en', 'kk']
+  const defaultLang = supportedLocales.includes(deviceLocale) ? deviceLocale : 'ru'
+
   const [step, setStep] = useState(0)
   const [dateInput, setDateInput] = useState('')
   const [amountInput, setAmountInput] = useState('500')
   const [period, setPeriod] = useState<'day' | 'month'>('day')
   const [selectedCurrency, setSelectedCurrency] = useState('RUB')
+  const [selectedLanguage, setSelectedLanguage] = useState(defaultLang)
+
+  i18n.locale = selectedLanguage
+  const t = (key: string) => i18n.t(key)
+
+  const STEPS = [
+    { emoji: '🎯', title: t('onboardingTitle1'), subtitle: t('onboardingSub1'), type: 'intro' },
+    { emoji: '🌍', title: t('language'), subtitle: '', type: 'language' },
+    { emoji: '📅', title: t('onboardingTitle2'), subtitle: t('onboardingSub2'), type: 'date' },
+    { emoji: '💰', title: t('onboardingTitle3'), subtitle: t('onboardingSub3'), type: 'amount' },
+  ]
 
   const handleDateChange = (text: string) => {
     const digits = text.replace(/\D/g, '')
@@ -65,6 +63,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => void }) {
         : (isNaN(amount) || amount <= 0 ? 500 : amount)
       await setDailyAmount(dailyAmount)
       await setCurrency(selectedCurrency)
+      await setLanguage(selectedLanguage)
       await setupAllNotifications()
       onDone()
     } else {
@@ -80,7 +79,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => void }) {
   const currencySymbol = CURRENCIES.find(c => c.code === selectedCurrency)?.symbol ?? '₽'
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       {/* Прогресс */}
       <View style={styles.dots}>
         {STEPS.map((_, i) => (
@@ -92,7 +91,28 @@ export default function OnboardingScreen({ onDone }: { onDone: () => void }) {
         <View style={styles.content}>
           <Text style={styles.emoji}>{STEPS[step].emoji}</Text>
           <Text style={styles.title}>{STEPS[step].title}</Text>
-          <Text style={styles.subtitle}>{STEPS[step].subtitle}</Text>
+          {STEPS[step].subtitle ? <Text style={styles.subtitle}>{STEPS[step].subtitle}</Text> : null}
+
+          {/* Язык */}
+          {STEPS[step].type === 'language' && (
+            <View style={styles.langGrid}>
+              {LANGUAGES.map(l => (
+                <TouchableOpacity
+                  key={l.code}
+                  style={[styles.langBtn, selectedLanguage === l.code && styles.langBtnActive]}
+                  onPress={() => {
+                    setSelectedLanguage(l.code)
+                    i18n.locale = l.code
+                  }}
+                >
+                  <Text style={styles.langFlag}>{l.flag}</Text>
+                  <Text style={[styles.langName, selectedLanguage === l.code && styles.langNameActive]}>
+                    {l.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
 
           {/* Дата */}
           {STEPS[step].type === 'date' && (
@@ -107,7 +127,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => void }) {
                 maxLength={10}
                 autoFocus
               />
-              <Text style={styles.inputHint}>Формат: ДД.ММ.ГГГГ</Text>
+              <Text style={styles.inputHint}>{t('dateFormat')}</Text>
               <TouchableOpacity
                 style={styles.todayBtn}
                 onPress={() => {
@@ -118,7 +138,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => void }) {
                   setDateInput(`${d}.${m}.${y}`)
                 }}
               >
-                <Text style={styles.todayBtnText}>📅 Сегодня</Text>
+                <Text style={styles.todayBtnText}>{t('today')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -126,15 +146,13 @@ export default function OnboardingScreen({ onDone }: { onDone: () => void }) {
           {/* Сумма */}
           {STEPS[step].type === 'amount' && (
             <View style={styles.inputBox}>
-
-              {/* Переключатель день/месяц */}
               <View style={styles.periodSwitch}>
                 <TouchableOpacity
                   style={[styles.periodBtn, period === 'day' && styles.periodBtnActive]}
                   onPress={() => setPeriod('day')}
                 >
                   <Text style={[styles.periodText, period === 'day' && styles.periodTextActive]}>
-                    В день
+                    {t('perDay')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -142,12 +160,11 @@ export default function OnboardingScreen({ onDone }: { onDone: () => void }) {
                   onPress={() => setPeriod('month')}
                 >
                   <Text style={[styles.periodText, period === 'month' && styles.periodTextActive]}>
-                    В месяц
+                    {t('perMonth')}
                   </Text>
                 </TouchableOpacity>
               </View>
 
-              {/* Поле суммы */}
               <View style={styles.amountRow}>
                 <TouchableOpacity
                   style={styles.currencyToggle}
@@ -167,11 +184,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => void }) {
                   autoFocus
                 />
               </View>
-              <Text style={styles.inputHint}>
-                {period === 'day' ? 'Средняя сумма ставок в день' : 'Средняя сумма ставок в месяц'}
-              </Text>
 
-              {/* Пресеты */}
               <View style={styles.presets}>
                 {(period === 'day'
                   ? ['100', '500', '1000', '3000']
@@ -189,8 +202,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => void }) {
                 ))}
               </View>
 
-              {/* Выбор валюты */}
-              <Text style={styles.currencyLabel}>Валюта</Text>
+              <Text style={styles.currencyLabel}>{t('currency')}</Text>
               <View style={styles.currencyGrid}>
                 {CURRENCIES.map(c => (
                   <TouchableOpacity
@@ -205,7 +217,6 @@ export default function OnboardingScreen({ onDone }: { onDone: () => void }) {
                   </TouchableOpacity>
                 ))}
               </View>
-
             </View>
           )}
         </View>
@@ -218,7 +229,7 @@ export default function OnboardingScreen({ onDone }: { onDone: () => void }) {
           disabled={!canNext()}
         >
           <Text style={styles.nextBtnText}>
-            {step === STEPS.length - 1 ? 'Начать! 🚀' : 'Дальше →'}
+            {step === STEPS.length - 1 ? t('start') : t('next')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -227,37 +238,32 @@ export default function OnboardingScreen({ onDone }: { onDone: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1, backgroundColor: '#07071a',
-  },
-  dots: {
-    flexDirection: 'row', justifyContent: 'center',
-    gap: 8, marginTop: 16, paddingHorizontal: 24,
-  },
-  dot: {
-    width: 8, height: 8, borderRadius: 4,
-    backgroundColor: '#1e1e40',
-  },
+  container: { flex: 1, backgroundColor: '#07071a' },
+  dots: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: 16, paddingHorizontal: 24 },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#1e1e40' },
   dotActive: { backgroundColor: '#7c3aed', width: 24 },
   scroll: { flexGrow: 1, padding: 24 },
   content: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 20 },
   emoji: { fontSize: 80, marginBottom: 24 },
-  title: {
-    color: '#fff', fontSize: 28, fontWeight: 'bold',
-    textAlign: 'center', marginBottom: 12,
+  title: { color: '#fff', fontSize: 26, fontWeight: 'bold', textAlign: 'center', marginBottom: 12 },
+  subtitle: { color: '#666', fontSize: 16, textAlign: 'center', lineHeight: 24, marginBottom: 32 },
+  langGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginTop: 16 },
+  langBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: '#12122a', borderRadius: 16,
+    paddingVertical: 14, paddingHorizontal: 20,
+    borderWidth: 1, borderColor: '#2a2a4a',
   },
-  subtitle: {
-    color: '#666', fontSize: 16, textAlign: 'center',
-    lineHeight: 24, marginBottom: 32,
-  },
+  langBtnActive: { backgroundColor: '#2d1a50', borderColor: '#7c3aed' },
+  langFlag: { fontSize: 24 },
+  langName: { color: '#666', fontSize: 16 },
+  langNameActive: { color: '#fff', fontWeight: '600' },
   inputBox: { width: '100%', alignItems: 'center' },
-
   input: {
     backgroundColor: '#12122a', color: '#fff',
     borderRadius: 16, padding: 18, fontSize: 24,
     width: '100%', textAlign: 'center',
-    borderWidth: 1, borderColor: '#2a2a4a',
-    marginBottom: 8,
+    borderWidth: 1, borderColor: '#2a2a4a', marginBottom: 8,
   },
   inputHint: { color: '#444', fontSize: 13, marginBottom: 16 },
   todayBtn: {
@@ -266,20 +272,15 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#2a2a4a',
   },
   todayBtnText: { color: '#a78bfa', fontSize: 15 },
-
   periodSwitch: {
     flexDirection: 'row', backgroundColor: '#12122a',
-    borderRadius: 14, padding: 4,
-    marginBottom: 16, borderWidth: 1, borderColor: '#2a2a4a',
+    borderRadius: 14, padding: 4, marginBottom: 16,
+    borderWidth: 1, borderColor: '#2a2a4a',
   },
-  periodBtn: {
-    flex: 1, paddingVertical: 10, paddingHorizontal: 20,
-    borderRadius: 10, alignItems: 'center',
-  },
+  periodBtn: { flex: 1, paddingVertical: 10, paddingHorizontal: 20, borderRadius: 10, alignItems: 'center' },
   periodBtnActive: { backgroundColor: '#7c3aed' },
   periodText: { color: '#666', fontSize: 15, fontWeight: '600' },
   periodTextActive: { color: '#fff' },
-
   amountRow: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#12122a', borderRadius: 16,
@@ -289,18 +290,10 @@ const styles = StyleSheet.create({
   currencyToggle: {
     backgroundColor: '#1e1040', paddingHorizontal: 18,
     paddingVertical: 16, borderRightWidth: 1, borderRightColor: '#2a2a4a',
-    alignItems: 'center', justifyContent: 'center',
   },
   currencyToggleText: { color: '#a78bfa', fontSize: 24, fontWeight: 'bold' },
-  amountInput: {
-    color: '#fff', fontSize: 32, fontWeight: 'bold',
-    flex: 1, padding: 16,
-  },
-
-  presets: {
-    flexDirection: 'row', flexWrap: 'wrap',
-    gap: 8, marginBottom: 24, justifyContent: 'center',
-  },
+  amountInput: { color: '#fff', fontSize: 32, fontWeight: 'bold', flex: 1, padding: 16 },
+  presets: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24, justifyContent: 'center' },
   preset: {
     backgroundColor: '#1a1a2e', borderRadius: 10,
     paddingVertical: 8, paddingHorizontal: 14,
@@ -309,15 +302,8 @@ const styles = StyleSheet.create({
   presetActive: { backgroundColor: '#2d1a50', borderColor: '#7c3aed' },
   presetText: { color: '#666', fontSize: 14 },
   presetTextActive: { color: '#fff' },
-
-  currencyLabel: {
-    color: '#a78bfa', fontSize: 14, fontWeight: '700',
-    alignSelf: 'flex-start', marginBottom: 10, letterSpacing: 1,
-  },
-  currencyGrid: {
-    flexDirection: 'row', flexWrap: 'wrap',
-    gap: 8, width: '100%',
-  },
+  currencyLabel: { color: '#a78bfa', fontSize: 14, fontWeight: '700', alignSelf: 'flex-start', marginBottom: 10 },
+  currencyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, width: '100%' },
   currencyBtn: {
     backgroundColor: '#1a1a2e', borderRadius: 10,
     paddingVertical: 8, paddingHorizontal: 12,
@@ -328,12 +314,8 @@ const styles = StyleSheet.create({
   currencySymbol: { color: '#a78bfa', fontSize: 16, fontWeight: 'bold' },
   currencyName: { color: '#666', fontSize: 12 },
   currencyNameActive: { color: '#fff' },
-
-  footer: { padding: 20, paddingBottom: 32 },
-  nextBtn: {
-    backgroundColor: '#7c3aed', borderRadius: 20,
-    padding: 20, alignItems: 'center',
-  },
+  footer: { padding: 20, paddingBottom: 8 },
+  nextBtn: { backgroundColor: '#7c3aed', borderRadius: 20, padding: 20, alignItems: 'center' },
   nextBtnDisabled: { backgroundColor: '#2a2a4a' },
   nextBtnText: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
 })
